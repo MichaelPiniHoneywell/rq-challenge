@@ -5,7 +5,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 public interface IEmployeeController {
@@ -26,7 +25,7 @@ public interface IEmployeeController {
     ResponseEntity<List<String>> getTopTenHighestEarningEmployeeNames();
 
     @PostMapping()
-    ResponseEntity<Employee> createEmployee(@RequestBody Map<String, Object> employeeInput);
+    ResponseEntity<Employee> createEmployee(@RequestBody String name, String salary, String age);
 
     @DeleteMapping("/{id}")
     ResponseEntity<String> deleteEmployeeById(@PathVariable String id);
