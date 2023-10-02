@@ -6,6 +6,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.springframework.http.HttpStatus.EXPECTATION_FAILED;
@@ -132,17 +133,15 @@ public class EmployeeControllerImpl implements IEmployeeController {
     /**
      * Creates an employee with the given name, salary, and age, and returns it as a ResponseEntity.
      *
-     * @param name   The name of the employee.
-     * @param salary The salary of the employee.
-     * @param age    The age of the employee.
+     * @param employeeInput   map containing details of employee
      * @return A ResponseEntity containing the created employee.
      */
     @Override
-    public ResponseEntity<Employee> createEmployee(String name, String salary, String age) {
+    public ResponseEntity<Employee> createEmployee(Map<String, Object> employeeInput) {
         Employee employee = new Employee();
-        employee.setEmployee_name(name);
-        employee.setEmployee_salary(Integer.parseInt(salary));
-        employee.setEmployee_age(Integer.parseInt(age));
+        employee.setEmployee_name((String) employeeInput.get("name"));
+        employee.setEmployee_salary((Integer) employeeInput.get("salary"));
+        employee.setEmployee_age((Integer) employeeInput.get("age"));
 
         return createEmployee(employee);
     }

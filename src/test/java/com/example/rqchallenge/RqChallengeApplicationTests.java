@@ -119,19 +119,20 @@ class RqChallengeApplicationTests {
 
     @Test
     void testCreateEmployee() {
+        Map<String, Object> employeeInput  = new HashMap<>() {{
+            put("name", "newName");
+            put("salary", 100000);
+            put("age",31);
+        }};
 
-        String name = "newName";
-        String salary = "100000";
-        String age = "31";
-
-        ResponseEntity<Employee> response = employeeController.createEmployee(name, salary, age);
+        ResponseEntity<Employee> response = employeeController.createEmployee(employeeInput);
 
 //        assertEquals(HttpStatus.CREATED, response.getStatusCode());
         assertEquals(HttpStatus.OK, response.getStatusCode());
         Employee createdEmployee = response.getBody();
         assertNotNull(createdEmployee);
-        assertEquals(name, createdEmployee.getEmployee_name());
-        assertEquals(Integer.parseInt(salary), createdEmployee.getEmployee_salary());
-        assertEquals(Integer.parseInt(age), createdEmployee.getEmployee_age());
+        assertEquals("newName", createdEmployee.getEmployee_name());
+        assertEquals(100000, createdEmployee.getEmployee_salary());
+        assertEquals(31, createdEmployee.getEmployee_age());
     }
 }
