@@ -1,5 +1,7 @@
 package com.example.rqchallenge.employees;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -13,9 +15,11 @@ import java.util.stream.Collectors;
 
 import static org.springframework.http.HttpStatus.EXPECTATION_FAILED;
 import static org.springframework.http.HttpStatus.OK;
+
 @RestController
 @RequestMapping("/employees")
 public class EmployeeControllerImpl implements IEmployeeController {
+    private static final Logger logger = LoggerFactory.getLogger(EmployeeControllerImpl.class);
 
     @Autowired
     private DummyService dummyService;
@@ -46,8 +50,10 @@ public class EmployeeControllerImpl implements IEmployeeController {
     public ResponseEntity<List<Employee>> getAllEmployees() {
         try {
             List<Employee> employees = getAllEmployeesResponse();
+            logger.info("Retrieved all employees successfully.");
             return ResponseEntity.ok(employees);
         } catch (ResponseStatusException e) {
+            logger.error("Error while retrieving all employees: {}", e.getMessage());
             return new ResponseEntity<>(e.getStatus());
         }
     }
@@ -63,8 +69,11 @@ public class EmployeeControllerImpl implements IEmployeeController {
         try {
             List<Employee> employees = getAllEmployeesResponse();
             List<Employee> result = employees.stream().filter(e -> e.getEmployee_name().equals(searchString)).collect(Collectors.toList());
+            logger.info("Employee {} found successfully", searchString);
+
             return ResponseEntity.ok(result);
         } catch (ResponseStatusException e) {
+            logger.error("Error while retrieving employee: {}", e.getMessage());
             return new ResponseEntity<>(e.getStatus());
         }
     }
@@ -77,12 +86,13 @@ public class EmployeeControllerImpl implements IEmployeeController {
      */
     @Override
     public ResponseEntity<Employee> getEmployeeById(String id) {
-
         ResponseEntity<EmployeeResponse> response = dummyService.getEmployeeById(id);
         if (response.getStatusCode() == OK && response.hasBody()) {
             Employee employee = response.getBody().getData();
+            logger.info("Retrieved employee by ID: {}", id);
             return ResponseEntity.ok(employee);
         }
+        logger.error("Error while retrieving employee by ID: {}", response.getStatusCode());
         return new ResponseEntity<>(response.getStatusCode());
     }
 
@@ -103,9 +113,10 @@ public class EmployeeControllerImpl implements IEmployeeController {
                     highestSalary = salary;
                 }
             }
-
+            logger.info("Retrieved Highest salary successfully");
             return ResponseEntity.ok(highestSalary);
         } catch (ResponseStatusException e) {
+            logger.error("Error while retrieving highest salary of employees: {}", e.getMessage());
             return new ResponseEntity<>(e.getStatus());
         }
     }
@@ -123,8 +134,10 @@ public class EmployeeControllerImpl implements IEmployeeController {
 
             List<Employee> topTen = employees.subList(0, 10);
             List<String> result = topTen.stream().map(Employee::getEmployee_name).collect(Collectors.toList());
+            logger.info("Retrieved Highest salary employees successfully: {}", result);
             return ResponseEntity.ok(result);
         } catch (ResponseStatusException e) {
+            logger.error("Error while retrieving top 10 highest salary employees: {}", e.getMessage());
             return new ResponseEntity<>(e.getStatus());
         }
     }
@@ -156,8 +169,10 @@ public class EmployeeControllerImpl implements IEmployeeController {
 
         if (response.getStatusCode() == OK && response.hasBody()) {
             Employee createdEmployee = response.getBody().getData();
+            logger.info("Successfully created employee: {}", createdEmployee);
             return ResponseEntity.ok(createdEmployee);
         }
+        logger.error("Failed to create employee with status code: {}", response.getStatusCode());
         return new ResponseEntity<>(response.getStatusCode());
     }
 
@@ -170,9 +185,11 @@ public class EmployeeControllerImpl implements IEmployeeController {
     @Override
     public ResponseEntity<String> deleteEmployeeById(String id) {
         dummyService.deleteEmployee(id);
-        if (getEmployeeById(id).getStatusCode() == HttpStatus.NOT_FOUND) {//had to guess the status code as the Dummy Service does not actually delete the record
+        if (getEmployeeById(id).getStatusCode() == HttpStatus.NOT_FOUND) {
+            logger.info("Employee deleted successfully with ID: {}", id);
             return ResponseEntity.ok("Employee deleted successfully");
         }
+        logger.error("Application failed to remove Employee with ID: {}", id);
         return new ResponseEntity<>("Application failed to remove Employee", EXPECTATION_FAILED);
     }
 
