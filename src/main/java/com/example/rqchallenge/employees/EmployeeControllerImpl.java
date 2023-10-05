@@ -1,7 +1,9 @@
 package com.example.rqchallenge.employees;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Comparator;
@@ -11,9 +13,13 @@ import java.util.stream.Collectors;
 
 import static org.springframework.http.HttpStatus.EXPECTATION_FAILED;
 import static org.springframework.http.HttpStatus.OK;
-
+@RestController
+@RequestMapping("/employees")
 public class EmployeeControllerImpl implements IEmployeeController {
-    private static final String BASE_URL = "https://dummy.restapiexample.com/";
+
+    @Autowired
+    private DummyService dummyService;
+
 
     /**
      * Retrieves a list of all employees from the API.
@@ -22,10 +28,7 @@ public class EmployeeControllerImpl implements IEmployeeController {
      * @throws ResponseStatusException if there is an issue with the API request or response.
      */
     private List<Employee> getAllEmployeesResponse() throws ResponseStatusException {
-        String uri = BASE_URL + "api/v1/employees";
-        RestTemplate restTemplate = new RestTemplate();
-
-        ResponseEntity<EmployeeListResponse> responseEntity = restTemplate.getForEntity(uri, EmployeeListResponse.class);
+        ResponseEntity<EmployeeListResponse> responseEntity = dummyService.getEmployees();
         if (responseEntity.getStatusCode() == HttpStatus.OK && responseEntity.hasBody()) {
             return responseEntity.getBody().getData();
         } else {
@@ -41,7 +44,6 @@ public class EmployeeControllerImpl implements IEmployeeController {
      */
     @Override
     public ResponseEntity<List<Employee>> getAllEmployees() {
-
         try {
             List<Employee> employees = getAllEmployeesResponse();
             return ResponseEntity.ok(employees);
@@ -75,11 +77,8 @@ public class EmployeeControllerImpl implements IEmployeeController {
      */
     @Override
     public ResponseEntity<Employee> getEmployeeById(String id) {
-        String uri = BASE_URL + "api/v1/employee/" + id;
-        // Create a RestTemplate with JSON message converter
-        RestTemplate restTemplate = new RestTemplate();
 
-        ResponseEntity<EmployeeResponse> response = restTemplate.getForEntity(uri, EmployeeResponse.class);
+        ResponseEntity<EmployeeResponse> response = dummyService.getEmployeeById(id);
         if (response.getStatusCode() == OK && response.hasBody()) {
             Employee employee = response.getBody().getData();
             return ResponseEntity.ok(employee);
@@ -133,7 +132,7 @@ public class EmployeeControllerImpl implements IEmployeeController {
     /**
      * Creates an employee with the given name, salary, and age, and returns it as a ResponseEntity.
      *
-     * @param employeeInput   map containing details of employee
+     * @param employeeInput map containing details of employee
      * @return A ResponseEntity containing the created employee.
      */
     @Override
@@ -153,19 +152,13 @@ public class EmployeeControllerImpl implements IEmployeeController {
      * @return A ResponseEntity containing the created employee.
      */
     public ResponseEntity<Employee> createEmployee(Employee employee) {
-        String uri = BASE_URL + "api/v1/create";
-
-        //call POST api
-        RestTemplate restTemplate = new RestTemplate();
-        ResponseEntity<EmployeeResponse> response = restTemplate.postForEntity(uri, employee, EmployeeResponse.class);
+        ResponseEntity<EmployeeResponse> response = dummyService.createEmployee(employee);
 
         if (response.getStatusCode() == OK && response.hasBody()) {
             Employee createdEmployee = response.getBody().getData();
             return ResponseEntity.ok(createdEmployee);
         }
         return new ResponseEntity<>(response.getStatusCode());
-
-
     }
 
     /**
@@ -176,11 +169,9 @@ public class EmployeeControllerImpl implements IEmployeeController {
      */
     @Override
     public ResponseEntity<String> deleteEmployeeById(String id) {
-        String uri = BASE_URL + "api/v1/delete/" + id;
-        RestTemplate restTemplate = new RestTemplate();
-        restTemplate.delete(uri);
-        if (getEmployeeById(id).getStatusCode() == HttpStatus.NOT_FOUND) {//todo Check status code
-            return ResponseEntity.ok("Employee removed Successfully");
+        dummyService.deleteEmployee(id);
+        if (getEmployeeById(id).getStatusCode() == HttpStatus.NOT_FOUND) {//had to guess the status code as the Dummy Service does not actually delete the record
+            return ResponseEntity.ok("Employee deleted successfully");
         }
         return new ResponseEntity<>("Application failed to remove Employee", EXPECTATION_FAILED);
     }

@@ -1,29 +1,36 @@
 package com.example.rqchallenge;
 
-import com.example.rqchallenge.employees.Employee;
-import com.example.rqchallenge.employees.EmployeeControllerImpl;
+import com.example.rqchallenge.employees.*;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
-//todo consider mocking responses from the server to avoid too many requests status (to make this more test friendly create a class that handles all outgoing requests that can be mocked)
 @SpringBootTest
 class RqChallengeApplicationTests {
-    private final EmployeeControllerImpl employeeController = new EmployeeControllerImpl();
+    @MockBean
+    private DummyService dummyServiceMock;
+    @Autowired
+    private EmployeeControllerImpl employeeController;
 
 
     @Test
     void contextLoads() {
-        //tests if the context loads, can remain empty.
+        assertNotNull(dummyServiceMock);
+        assertNotNull(employeeController);
     }
 
     @Test
     void testGetAllEmployees() {
+        when(dummyServiceMock.getEmployees()).thenReturn(TestHelper.getAllEmployeesResponse());
+
         ResponseEntity<List<Employee>> response = employeeController.getAllEmployees();
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -47,6 +54,7 @@ class RqChallengeApplicationTests {
         tigerNixon.setEmployee_age(61);
         tigerNixon.setProfile_image(null);
 
+        when(dummyServiceMock.getEmployees()).thenReturn(TestHelper.getAllEmployeesResponse());
         ResponseEntity<List<Employee>> response = employeeController.getEmployeesByNameSearch(searchString);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -64,15 +72,18 @@ class RqChallengeApplicationTests {
         employee.setEmployee_age(61);
         employee.setProfile_image(null);
 
+        when(dummyServiceMock.getEmployeeById(employeeId)).thenReturn(TestHelper.getEmployeeOneResponse());
         ResponseEntity<Employee> response = employeeController.getEmployeeById(employeeId);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(employee,response.getBody());
+        assertEquals(employee, response.getBody());
     }
 
     @Test
     void testGetHighestSalaryOfEmployees() {
         int highestSalary = 725000; //highest salary is 725000 (emp ID 17)
+
+        when(dummyServiceMock.getEmployees()).thenReturn(TestHelper.getAllEmployeesResponse());
 
         ResponseEntity<Integer> response = employeeController.getHighestSalaryOfEmployees();
 
@@ -94,6 +105,7 @@ class RqChallengeApplicationTests {
         topTenNames.add("Rhona Davidson");
         topTenNames.add("Tiger Nixon");
 
+        when(dummyServiceMock.getEmployees()).thenReturn(TestHelper.getAllEmployeesResponse());
 
         ResponseEntity<List<String>> response = employeeController.getTopTenHighestEarningEmployeeNames();
 
@@ -108,26 +120,32 @@ class RqChallengeApplicationTests {
     }
 
     @Test
-    void testDeleteEmployeeById() {//todo test
+    void testDeleteEmployeeById() {
         String employeeId = "1";
-
+        when(dummyServiceMock.getEmployeeById(employeeId)).thenReturn(TestHelper.getDeletedEmployee());
         ResponseEntity<String> response = employeeController.deleteEmployeeById(employeeId);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals("Employee deleted successfully", response.getBody());
+        verify(dummyServiceMock).deleteEmployee(employeeId);
     }
 
     @Test
     void testCreateEmployee() {
-        Map<String, Object> employeeInput  = new HashMap<>() {{
+        Map<String, Object> employeeInput = new HashMap<>() {{
             put("name", "newName");
             put("salary", 100000);
-            put("age",31);
+            put("age", 31);
         }};
 
+        Employee employee = new Employee();
+        employee.setEmployee_name("newName");
+        employee.setEmployee_salary(100000);
+        employee.setEmployee_age(31);
+
+        when(dummyServiceMock.createEmployee(employee)).thenReturn(TestHelper.getCreatedEmployeeResponse());
         ResponseEntity<Employee> response = employeeController.createEmployee(employeeInput);
 
-//        assertEquals(HttpStatus.CREATED, response.getStatusCode());
         assertEquals(HttpStatus.OK, response.getStatusCode());
         Employee createdEmployee = response.getBody();
         assertNotNull(createdEmployee);

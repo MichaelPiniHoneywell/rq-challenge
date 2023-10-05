@@ -7,7 +7,7 @@ public class Employee {
     private String employee_name;
     private int employee_salary;
     private int employee_age;
-    private String profile_image; //todo check this
+    private String profile_image;
     public int getId() {
         return id;
     }
